@@ -1,4 +1,4 @@
-# Установка и настройка PostgteSQL в контейнере Docker
+# Установка и настройка PostgreSQL в контейнере Docker
 
 ## Цель:
 
@@ -11,14 +11,14 @@
 
 myuser: `curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh && rm get-docker.sh && sudo usermod -aG docker $USER && newgrp docker`
 
-#### 1.1 Проверяем 
+#### 1.1 Проверяем
 
 myuser: `docker --version`
 ```
 Docker version 27.4.0, build bde2b89
 ```
 
-#### 1.2 Создаем docker-сеть:
+#### 1.2 Создаем docker-сеть
 
 myuser: `sudo docker network create pg-net`
 ```
@@ -27,7 +27,7 @@ d15cf7a52af4ed85792ef9319ffbbf736343629951fe570f55a2e79c104b1b2c
 
 ### 2. Создаем каталог /opt/postgres
 
-### 3. Разворавчиваем контейнер с PostgreSQL 17 смонтировав в него /opt/postgres
+### 3. Разворачиваем контейнер с PostgreSQL 17 смонтировав в него /opt/postgres
 
 myuser: `sudo docker run --name pg-server --network pg-net -e POSTGRES_PASSWORD=postgres -d -p 5432:5432 -v /opt/postgres:/var/lib/postgresql/data postgres:17`
 
@@ -38,7 +38,7 @@ myuser: `sudo docker ps -a`
 649bbf4466c8   postgres:17   "docker-entrypoint.s…"   4 minutes ago   Up 3 minutes   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   pg-server
 ```
 
-### 4. Разворавчиваем контейнер с клиентом postgres и подключаемся из контейнера с клиентом к контейнеру с сервером
+### 4. Разворачиваем контейнер с клиентом postgres и подключаемся из контейнера с клиентом к контейнеру с сервером
 
 myuser: `sudo docker run -it --rm --network pg-net --name pg-client postgres:17 psql -h pg-server -U postgres`
 
@@ -91,9 +91,9 @@ public | persons | table | postgres
 (1 row)
 ```
 
-### 7. Удалить контейнер с сервером
+### 7. Удаляем контейнер с сервером
 
-### 7.1 Получем идентификатор контейнера
+### 7.1 Получаем идентификатор контейнера
 
 myuser: `sudo docker ps -a`
 ```
@@ -101,7 +101,7 @@ CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS   
 649bbf4466c8   postgres:17   "docker-entrypoint.s…"   31 minutes ago   Up 31 minutes   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   pg-server
 ```
 
-### 7.2 Удалем контейнер
+### 7.2 Удаляем контейнер
 
 myuser: `docker rm -f 649bbf4466c8`
 ```

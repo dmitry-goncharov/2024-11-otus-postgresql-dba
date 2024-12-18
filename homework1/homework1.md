@@ -2,7 +2,7 @@
 
 ## Цель:
 
-- Научиться управлять уровнем изоляции транзации в PostgreSQL.
+- Научиться управлять уровнем изоляции транзакции в PostgreSQL.
 - Понимать особенность работы уровней read commited и repeatable read.
 
 ## Пошаговая инструкция и результаты
@@ -34,7 +34,7 @@ myuser: `psql -U postgres`
 
 postgres: `\set AUTOCOMMIT off`
 
-### 3. Начинаем новую транзакцию в обоих сессиях с дефолтным (не меняя) уровнем изоляции
+### 3. Начинаем новую транзакцию в обеих сессиях с дефолтным (не меняя) уровнем изоляции
 
 postgres: `begin;`<br>
 BEGIN
@@ -68,7 +68,7 @@ postgres: `select from persons;`<br>
 postgres: `commit;`<br>
 COMMIT
 
-### 9. Начинаем новые, но уже repeatable read транзации в обеих сессиях
+### 9. Начинаем новые, но уже repeatable read транзакции в обеих сессиях
 
 postgres: `set transaction isolation level repeatable read;`<br>
 SET
