@@ -7,3 +7,7 @@
 ## Homework 2
 
 - Установка и настройка PostgreSQL в контейнере Docker
+
+## Homework 3
+
+- Установка и настройка PostgreSQL
