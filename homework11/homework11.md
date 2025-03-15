@@ -112,7 +112,12 @@ CREATE TABLE
 
 ### 10.  Создадим триггер на таблице продаж (sales), для поддержки данных в витрине в актуальном состоянии (вычисляющий при каждой продаже сумму и записывающий её в витрину)
 
-Так как в нашей таблице витрины нет идентификаторов товаров, то в триггерной функции будем вызывать перестроение всей таблицы витрины.
+Так как в нашей таблице витрины нет идентификаторов товаров, то добавим ограничение уникальности на имя товара, чтобы в триггерной функции не вызывать перестроение всей таблицы витрины.
+
+shopdb: `ALTER TABLE good_sum_mart ADD CONSTRAINT unique_good_name UNIQUE (good_name);`
+```
+ALTER TABLE
+```
 
 shopdb:
 ```
@@ -120,14 +125,34 @@ CREATE OR REPLACE FUNCTION tf_update_good_sum_mart()
 RETURNS trigger
 AS
 $$
+DECLARE 
+    g_name varchar;
+    g_price numeric;
 BEGIN
-    IF TG_LEVEL = 'STATEMENT' THEN
-        TRUNCATE TABLE good_sum_mart;
-        INSERT INTO good_sum_mart (good_name, sum_sale)
-        SELECT G.good_name, sum(G.good_price * S.sales_qty)
-        FROM goods G
-        INNER JOIN sales S ON S.good_id = G.goods_id
-        GROUP BY G.good_name;
+    IF TG_LEVEL = 'ROW' THEN
+        CASE TG_OP
+            WHEN 'INSERT' THEN
+                g_name := (SELECT G.good_name from goods G where G.goods_id = NEW.good_id);
+                g_price := ((SELECT G.good_price from goods G where G.goods_id = NEW.good_id) * NEW.sales_qty);                
+                INSERT INTO good_sum_mart (good_name, sum_sale)
+                VALUES (g_name, g_price)
+                ON CONFLICT (good_name) DO UPDATE
+                SET sum_sale = good_sum_mart.sum_sale + g_price;
+            WHEN 'DELETE' THEN
+                g_name := (SELECT G.good_name from goods G where G.goods_id = OLD.good_id);
+                g_price := ((SELECT G.good_price from goods G where G.goods_id = OLD.good_id) * OLD.sales_qty);
+                INSERT INTO good_sum_mart (good_name, sum_sale)
+                VALUES (g_name, g_price)
+                ON CONFLICT (good_name) DO UPDATE
+                SET sum_sale = good_sum_mart.sum_sale - g_price;
+            WHEN 'UPDATE' THEN
+                g_name := (SELECT G.good_name from goods G where G.goods_id = NEW.good_id);
+                g_price := ((SELECT G.good_price from goods G where G.goods_id = NEW.good_id) * (NEW.sales_qty - OLD.sales_qty));
+                INSERT INTO good_sum_mart (good_name, sum_sale)
+                VALUES (g_name, g_price)
+                ON CONFLICT (good_name) DO UPDATE
+                SET sum_sale = good_sum_mart.sum_sale + g_price;
+        END CASE;
     END IF;
     RETURN NULL;
 END;
@@ -142,7 +167,7 @@ shopdb:
 CREATE TRIGGER trg_after_update_sales
 AFTER INSERT OR UPDATE OR DELETE
 ON sales
-FOR EACH STATEMENT
+FOR EACH ROW
 EXECUTE FUNCTION tf_update_good_sum_mart();
 ```
 ```
@@ -169,5 +194,33 @@ shopdb: `SELECT * FROM good_sum_mart;`
 --------------------------+--------------
  Автомобиль Ferrari FXX K | 185000000.01
  Спички хозайственные     |        66.00
+(2 rows)
+```
+
+shopdb: `UPDATE sales SET sales_qty = 1 WHERE sales_id = 5;`
+```
+UPDATE 1
+```
+
+shopdb: `SELECT * FROM good_sum_mart;`
+```
+        good_name         |   sum_sale
+--------------------------+--------------
+ Автомобиль Ferrari FXX K | 185000000.01
+ Спички хозайственные     |        70.50
+(2 rows)
+```
+
+shopdb: `DELETE FROM sales WHERE sales_id = 5;`
+```
+DELETE 1
+```
+
+shopdb: `SELECT * FROM good_sum_mart;`
+```
+        good_name         |   sum_sale
+--------------------------+--------------
+ Автомобиль Ferrari FXX K | 185000000.01
+ Спички хозайственные     |        65.50
 (2 rows)
 ```
